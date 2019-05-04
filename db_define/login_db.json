@@ -1,0 +1,41 @@
+{
+	"db_pkg" : "login_db",
+	
+	"charset": "utf8",
+	
+	"field_structs": [
+	],
+	
+	"tables" : [
+		{
+			"name": "t_account",
+			"primary_key": "account",
+			"engine": "innodb",
+			"fields": [
+				{ "name":"account",						"type":"char",				"length":32,		"index_type":"none",	"create_flags":"not null" },
+				{ "name":"unique_id",					"type":"char",				"length":64,		"index_type":"normal",	"create_flags":"not null,default" },
+				{ "name":"password",					"type":"char",				"length":32,		"index_type":"none",	"create_flags":"not null,default" },
+				{ "name":"register_time",				"type":"int",				"length":0,			"index_type":"none",	"create_flags":"not null,default" },
+				{ "name":"channel",						"type":"char",				"length":32,		"index_type":"none",	"create_flags":"not null,default" },
+				{ "name":"token",						"type":"char",				"length":128,		"index_type":"none",	"create_flags":"not null,default" },
+				{ "name":"last_server_id",				"type":"int",				"length":0,			"index_type":"none",	"create_flags":"unsigned,not null,default" },
+				{ "name":"bind_new_account",			"type":"char",				"length":32,		"index_type":"none",	"create_flags":"not null,default" },
+				{ "name":"before_bind_account",			"type":"char",				"length":32,		"index_type":"none",	"create_flags":"not null,default" },
+				{ "name":"last_get_player_list_time", 	"type":"int", 				"length":0,   		"index_type":"none",	"create_flags":"unsigned,not null,default" }
+			]
+		},
+		{
+			"name": "t_ban_player",
+			"primary_key": "unique_id",
+			"engine": "innodb",
+			"fields": [
+				{ "name":"unique_id",					"type":"char",				"length":64,		"index_type":"none",	"create_flags":"not null" },
+				{ "name":"account",						"type":"char",				"length":32,		"index_type":"normal",	"create_flags":"not null,default" },
+				{ "name":"player_id",					"type":"int",				"length":0,			"index_type":"normal",	"create_flags":"unsigned,not null,default" },
+				{ "name":"start_time",					"type":"int",				"length":0,			"index_type":"none",	"create_flags":"unsigned,not null,default" },
+				{ "name":"start_time_str",				"type":"char",				"length":32,		"index_type":"none",	"create_flags":"not null,default" },
+				{ "name":"duration",					"type":"int",				"length":0,			"index_type":"none",	"create_flags":"unsigned,not null,default" }
+			]
+		}
+	]
+}
