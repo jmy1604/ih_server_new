@@ -26,6 +26,7 @@ func (this *BanMgr) GetAndSet(unique_id string) *login_db.T_Ban_Player {
 		if !o {
 			return nil
 		}
+		this.ban_players.Store(unique_id, v)
 	}
 	return v.(*login_db.T_Ban_Player)
 }

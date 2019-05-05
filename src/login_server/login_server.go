@@ -353,6 +353,7 @@ func register_handler(account, password string, is_guest bool) (err_code int32, 
 		return
 	}
 
+	account_row.Lock()
 	account_row.Set_unique_id(uid)
 	account_row.Set_password(password)
 	account_row.Set_register_time(int32(time.Now().Unix()))
@@ -360,6 +361,7 @@ func register_handler(account, password string, is_guest bool) (err_code int32, 
 		account_row.Set_channel("guest")
 	}
 	account_table.Insert(account_row)
+	account_row.Unlock()
 
 	var response msg_client_message.S2CRegisterResponse = msg_client_message.S2CRegisterResponse{
 		Account:  account,
@@ -460,13 +462,6 @@ func bind_new_account_handler(server_id int32, account, password, new_account, n
 
 	var last_server_id int32
 	last_server_id = row.Get_last_server_id()
-
-	/*row = dbc.Accounts.AddRow(new_account)
-	if row == nil {
-		err_code = -1
-		log.Error("Account %v bind new account %v database error", account, new_account)
-		return
-	}*/
 
 	new_row := account_table.NewRow(new_account)
 	if new_channel == "" {

@@ -472,16 +472,15 @@ func H2LAccountBanHandler(conn *server_conn.ServerConn, m proto.Message) {
 	pid := req.GetPlayerId()
 	ban := req.GetBanOrFree()
 
-	ban_player := ban_mgr.Get(uid)
+	ban_player := ban_mgr.GetAndSet(uid)
 	var is_new bool
 	if ban_player == nil {
-		ban_player, o := ban_player_table.Select("unique_id", uid)
-		if !o {
-			ban_player = ban_player_table.NewRow(uid)
-			ban_mgr.Set(uid, ban_player)
-			is_new = true
-		}
+		ban_player = ban_player_table.NewRow(uid)
+		ban_mgr.Set(uid, ban_player)
+		is_new = true
 	}
+
+	ban_player.Lock()
 
 	if ban > 0 {
 		ban_player.Set_account(acc)
@@ -498,8 +497,16 @@ func H2LAccountBanHandler(conn *server_conn.ServerConn, m proto.Message) {
 	if is_new {
 		ban_player_table.Insert(ban_player)
 	} else {
-		ban_player_table.UpdateWithFieldName(ban_player, []string{"start_time", "start_time_str"})
+		var fields_name []string
+		if ban > 0 {
+			fields_name = []string{"account", "player_id", "start_time", "start_time_str"}
+		} else {
+			fields_name = []string{"start_time", "start_time_str"}
+		}
+		ban_player_table.UpdateWithFieldName(ban_player, fields_name)
 	}
+
+	ban_player.Unlock()
 
 	log.Trace("Unique id %v ban %v", uid, ban)
 }
