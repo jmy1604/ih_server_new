@@ -3,16 +3,24 @@ package main
 import (
 	"fmt"
 	"ih_server_new/libs/log"
+	"ih_server_new/src/db_gen/game_db"
 	"ih_server_new/src/server_config"
 	"net/http"
 	_ "net/http/pprof"
 	"runtime/debug"
 	"time"
+
+	"github.com/huoshan017/mysql-go/manager"
 )
 
 var config server_config.GameServerConfig
 var shutingdown bool
 var dbc DBC
+var db_mgr mysql_manager.DB
+var battle_record_table *game_db.T_Battle_Record_Table
+var global_table *game_db.T_Global_Table
+var player_table *game_db.T_Player_Table
+var ban_player_table *game_db.T_Ban_Player_Table
 
 func after_center_match_conn() {
 	if signal_mgr.IfClosing() {
@@ -22,7 +30,7 @@ func after_center_match_conn() {
 
 func main() {
 	defer func() {
-		log.Event("关闭服务器", nil)
+		log.Trace("关闭服务器", nil)
 		if err := recover(); err != nil {
 			log.Stack(err)
 			debug.PrintStack()
@@ -36,9 +44,10 @@ func main() {
 		return
 	}
 
-	log.Event("配置:服务器监听客户端地址", config.ListenClientInIP)
-	log.Event("配置:最大客户端连接数)", config.MaxClientConnections)
-	log.Event("连接数据库", config.MYSQL_NAME, log.Property{"地址", config.MYSQL_IP})
+	log.Trace("配置:服务器监听客户端地址", config.ListenClientInIP)
+	log.Trace("配置:最大客户端连接数)", config.MaxClientConnections)
+	log.Trace("连接数据库", config.MYSQL_NAME, log.Property{"地址", config.MYSQL_IP})
+
 	err := dbc.Conn(config.MYSQL_NAME, config.MYSQL_IP, config.MYSQL_ACCOUNT, config.MYSQL_PWD, func() string {
 		if config.MYSQL_COPY_PATH == "" {
 			return config.GetDBBackupPath()
@@ -50,9 +59,27 @@ func main() {
 		log.Error("连接数据库失败 %v", err)
 		return
 	} else {
-		log.Event("连接数据库成功", nil)
+		log.Trace("连接数据库成功", nil)
 		go dbc.Loop()
 	}
+
+	db_define := server_config.GetDBDefineFile("game_db.json")
+	if !db_mgr.LoadConfig(db_define) {
+		log.Error("载入数据库定义配置%v失败", db_define)
+		return
+	}
+
+	if !db_mgr.Connect(config.MYSQL_IP, config.MYSQL_ACCOUNT, config.MYSQL_PWD, config.MYSQL_NAME) {
+		log.Error("连接数据库失败")
+		return
+	}
+
+	db_mgr.Run()
+
+	tb_mgr := game_db.NewTablesManager(&db_mgr)
+	battle_record_table = tb_mgr.Get_T_Battle_Record_Table()
+	global_table = tb_mgr.Get_T_Global_Table()
+	ban_player_table = tb_mgr.Get_T_Ban_Player_Table()
 
 	if !signal_mgr.Init() {
 		log.Error("signal_mgr init failed")
@@ -64,21 +91,21 @@ func main() {
 		log.Error("global_config_load failed !")
 		return
 	} else {
-		log.Info("global_config_load succeed !")
+		log.Trace("global_config_load succeed !")
 	}
 
 	if !msg_handler_mgr.Init() {
 		log.Error("msg_handler_mgr init failed !")
 		return
 	} else {
-		log.Info("msg_handler_mgr init succeed !")
+		log.Trace("msg_handler_mgr init succeed !")
 	}
 
 	if !player_mgr.Init() {
 		log.Error("player_mgr init failed !")
 		return
 	} else {
-		log.Info("player_mgr init succeed !")
+		log.Trace("player_mgr init succeed !")
 	}
 
 	if !login_token_mgr.Init() {
@@ -128,7 +155,7 @@ func main() {
 		log.Error("hall_server init failed !")
 		return
 	} else {
-		log.Info("hall_server init succeed !")
+		log.Trace("hall_server init succeed !")
 	}
 
 	if signal_mgr.IfClosing() {
@@ -136,7 +163,7 @@ func main() {
 	}
 
 	// 连接CenterServer
-	log.Info("连接中心服务器！！")
+	log.Trace("连接中心服务器！！")
 	go center_conn.Start()
 	center_conn.WaitConnectFinished()
 

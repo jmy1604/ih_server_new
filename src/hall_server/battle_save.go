@@ -6,14 +6,17 @@ import (
 	"ih_server_new/libs/log"
 	"ih_server_new/proto/gen_go/client_message"
 	"ih_server_new/proto/gen_go/client_message_id"
+	"ih_server_new/src/db_gen/game_db"
 	"io"
+	"sync"
 	"time"
 
 	"github.com/golang/protobuf/proto"
 )
 
 type BattleSaveManager struct {
-	saves *dbBattleSaveTable
+	saves  map[int32]*game_db.T_Battle_Record
+	locker sync.RWMutex
 }
 
 var battle_record_mgr BattleSaveManager
@@ -59,7 +62,7 @@ func decompress_battle_record_data(data []byte) []byte {
 }
 
 func (this *BattleSaveManager) Init() {
-	this.saves = dbc.BattleSaves
+	this.saves = make(map[int32]*game_db.T_Battle_Record)
 }
 
 func (this *BattleSaveManager) SaveNew(attacker_id, defenser_id int32, data []byte, is_win int32, add_score int32) bool {
@@ -72,7 +75,7 @@ func (this *BattleSaveManager) SaveNew(attacker_id, defenser_id int32, data []by
 		//return false
 	}
 
-	row := this.saves.AddRow()
+	/*row := this.saves.AddRow()
 	if row != nil {
 		row.SetAttacker(attacker_id)
 		row.SetDefenser(defenser_id)
@@ -103,32 +106,69 @@ func (this *BattleSaveManager) SaveNew(attacker_id, defenser_id int32, data []by
 		}
 
 		log.Trace("Battle Record[%v] saved with attacker[%v] and defenser[%v]", row.GetId(), attacker_id, defenser_id)
+	}*/
+
+	next_record_id := global_mgr.GetNextBattleRecordId()
+	row := battle_record_table.NewRow(next_record_id)
+	row.Set_attacker(attacker_id)
+	row.Set_defenser(defenser_id)
+	row.Set_add_score(add_score)
+	data = compress_battle_record_data(data)
+	if data == nil {
+		return false
 	}
+	now_time := int32(time.Now().Unix())
+	row.Set_save_data(data)
+	row.Set_save_time(now_time)
+
+	battle_record_table.Insert(row)
+
+	attacker.push_battle_record(next_record_id)
 	return true
 }
 
-func (this *BattleSaveManager) GetRecord(requester_id, record_id int32) (attacker_id, defenser_id int32, record_data []byte, save_time int32, is_win int32, add_score int32) {
-	row := this.saves.GetRow(record_id)
-	if row == nil {
+func (this *BattleSaveManager) get_record(record_id int32) *game_db.T_Battle_Record {
+	this.locker.RLock()
+	d := this.saves[record_id]
+	this.locker.RUnlock()
+	if d == nil {
+		d = battle_record_table.SelectByPrimaryField(record_id)
+		if d == nil {
+			return nil
+		}
+		this.locker.Lock()
+		if this.saves[record_id] == nil {
+			this.saves[record_id] = d
+		}
+		this.locker.Unlock()
+	}
+	return d
+}
+
+func (this *BattleSaveManager) GetRecord(requester_id, record_id int32) (attacker_id, defenser_id int32, record_data []byte, save_time int32, is_win int8, add_score int32) {
+	d := this.get_record(record_id)
+	if d == nil {
 		return
 	}
 
-	delete_state := row.GetDeleteState()
+	d.AtomicExecuteReadOnly(func(t *game_db.T_Battle_Record) {
+		delete_state := t.Get_delete_state()
+		if delete_state == 1 && attacker_id == requester_id {
+			log.Error("Player[%v] is attacker, had deleted record", requester_id)
+			return
+		} else if delete_state == 2 && defenser_id == requester_id {
+			log.Error("Player[%v] is defenser, had deleted record", requester_id)
+			return
+		}
 
-	if delete_state == 1 && attacker_id == requester_id {
-		log.Error("Player[%v] is attacker, had deleted record", requester_id)
-		return
-	} else if delete_state == 2 && defenser_id == requester_id {
-		log.Error("Player[%v] is defenser, had deleted record", requester_id)
-		return
-	}
+		attacker_id = t.Get_attacker()
+		defenser_id = t.Get_defenser()
+		record_data = t.Get_save_data()
+		save_time = t.Get_save_time()
+		is_win = t.Get_is_win()
+		add_score = t.Get_add_score()
+	})
 
-	attacker_id = row.GetAttacker()
-	defenser_id = row.GetDefenser()
-	record_data = row.Data.GetData()
-	save_time = row.GetSaveTime()
-	is_win = row.GetIsWin()
-	add_score = row.GetAddScore()
 	return
 }
 
@@ -138,7 +178,10 @@ func (this *BattleSaveManager) DeleteRecord(requester_id, record_id int32) int32
 		return int32(msg_client_message.E_ERR_PLAYER_NOT_EXIST)
 	}
 
-	row := this.saves.GetRow(record_id)
+	this.locker.RLock()
+	row := this.saves[record_id]
+	this.locker.RUnlock()
+
 	if row == nil {
 		if requester.db.BattleSaves.HasIndex(record_id) {
 			requester.db.BattleSaves.Remove(record_id)
@@ -147,14 +190,14 @@ func (this *BattleSaveManager) DeleteRecord(requester_id, record_id int32) int32
 		return int32(msg_client_message.E_ERR_PLAYER_BATTLE_RECORD_NOT_FOUND)
 	}
 
-	attacker_id := row.GetAttacker()
-	defenser_id := row.GetDefenser()
+	attacker_id := row.Get_attacker()
+	defenser_id := row.Get_defenser()
 	if requester_id != attacker_id && requester_id != defenser_id {
 		log.Error("Battle record[%v] cant delete by player[%v]", record_id, requester_id)
 		return int32(msg_client_message.E_ERR_PLAYER_BATTLE_RECORD_FORBIDDEN_DELETE)
 	}
 
-	delete_state := row.GetDeleteState()
+	delete_state := row.Get_delete_state()
 	if requester_id == attacker_id && delete_state == 1 {
 		log.Error("Player[%v] already deleted battle record[%v] as attacker", requester_id, record_id)
 		return int32(msg_client_message.E_ERR_PLAYER_BATTLE_RECORD_FORBIDDEN_DELETE)
@@ -169,12 +212,12 @@ func (this *BattleSaveManager) DeleteRecord(requester_id, record_id int32) int32
 	defenser := player_mgr.GetPlayerById(defenser_id)
 	if delete_state == 0 {
 		if requester_id == attacker_id {
-			row.SetDeleteState(1)
+			row.Set_delete_state(1)
 			if attacker != nil {
 				attacker.db.BattleSaves.Remove(record_id)
 			}
 		} else {
-			row.SetDeleteState(2)
+			row.Set_delete_state(2)
 			if defenser != nil {
 				defenser.db.BattleSaves.Remove(record_id)
 			}

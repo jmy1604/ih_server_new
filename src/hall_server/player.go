@@ -6,6 +6,7 @@ import (
 	"ih_server_new/proto/gen_go/client_message"
 	"ih_server_new/proto/gen_go/client_message_id"
 	"ih_server_new/proto/gen_go/server_message"
+	"ih_server_new/src/db_gen/game_db"
 	"ih_server_new/src/share_data"
 	"ih_server_new/src/table_config"
 	"math/rand"
@@ -142,6 +143,7 @@ type Player struct {
 	role_power_ranklist    *utils.ShortRankList  // 角色战力排行
 	join_guild_locker      *sync.Mutex           // 加入公会锁
 	is_paying              int32                 // 是否正在支付
+	player_db              *game_db.T_Player
 }
 
 func (this *Player) _init() {

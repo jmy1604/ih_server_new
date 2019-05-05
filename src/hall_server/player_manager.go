@@ -356,8 +356,14 @@ func C2SEnterGameRequestHandler(msg_data []byte) (int32, *Player) {
 		return int32(msg_client_message.E_ERR_PLAYER_TOKEN_ERROR), p
 	}
 
-	row := dbc.BanPlayers.GetRow(uid)
+	/*row := dbc.BanPlayers.GetRow(uid)
 	if row != nil && row.GetStartTime() > 0 {
+		log.Error("Player unique id %v be banned", uid)
+		return int32(msg_client_message.E_ERR_ACCOUNT_BE_BANNED), p
+	}*/
+
+	ban_player := ban_player_mgr.Get(uid)
+	if ban_player != nil && ban_player.Get_start_time() > 0 {
 		log.Error("Player unique id %v be banned", uid)
 		return int32(msg_client_message.E_ERR_ACCOUNT_BE_BANNED), p
 	}
@@ -365,8 +371,8 @@ func C2SEnterGameRequestHandler(msg_data []byte) (int32, *Player) {
 	var is_new bool
 	p = player_mgr.GetPlayerByUid(uid)
 	if nil == p {
-		global_row := dbc.Global.GetRow()
-		player_id := global_row.GetNextPlayerId()
+		//global_row := dbc.Global.GetRow()
+		player_id := global_mgr.GetNextPlayerId() //global_row.GetNextPlayerId()
 		pdb := dbc.Players.AddRow(player_id)
 		if nil == pdb {
 			log.Error("player_db_to_msg AddRow pid(%d) failed !", player_id)
@@ -379,6 +385,14 @@ func C2SEnterGameRequestHandler(msg_data []byte) (int32, *Player) {
 		p.OnCreate()
 		player_mgr.Add2IdMap(p)
 		player_mgr.Add2UidMap(uid, p)
+		////////////////////////////////////////////////////////////////////////
+
+		player_row := player_table.NewRow(player_id)
+		player_row.Set_unique_id(uid)
+		player_row.Set_account(req.GetAcc())
+		p.player_db = player_row
+		player_table.Insert(player_row)
+
 		is_new = true
 		log.Info("player_db_to_msg new player(%d) !", player_id)
 	} else {
