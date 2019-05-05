@@ -3,18 +3,23 @@ package main
 import (
 	"fmt"
 	"ih_server_new/libs/log"
+	"ih_server_new/src/db_gen/rpc_db"
 	"ih_server_new/src/server_config"
 	"ih_server_new/src/share_data"
 	"time"
+
+	"github.com/huoshan017/mysql-go/manager"
 )
 
 var config server_config.RpcServerConfig
 var server_list share_data.ServerList
-var dbc DBC
+var db mysql_manager.DB
+var google_pay_table *rpc_db.T_Google_Pay_Table
+var apple_pay_table *rpc_db.T_Apple_Pay_Table
 
 func main() {
 	defer func() {
-		log.Event("关闭rpc_server服务器", nil)
+		log.Trace("关闭rpc_server服务器", nil)
 		if err := recover(); err != nil {
 			log.Stack(err)
 		}
@@ -34,32 +39,27 @@ func main() {
 
 	var err error
 	if config.MYSQL_NAME != "" {
-		log.Event("连接数据库", config.MYSQL_NAME, log.Property{"地址", config.MYSQL_IP})
-		err = dbc.Conn(config.MYSQL_NAME, config.MYSQL_IP, config.MYSQL_ACCOUNT, config.MYSQL_PWD, func() string {
-			if config.MYSQL_COPY_PATH == "" {
-				return config.GetDBBackupPath()
-			} else {
-				return config.MYSQL_COPY_PATH
-			}
-		}())
-		if err != nil {
+		if !db.LoadConfig(server_config.GetDBDefineFile("rpc_db.json")) {
+			fmt.Printf("载入db定义配置失败")
+			return
+		}
+
+		log.Trace("连接数据库", config.MYSQL_NAME, log.Property{"地址", config.MYSQL_IP})
+		if !db.Connect(config.MYSQL_IP, config.MYSQL_ACCOUNT, config.MYSQL_PWD, config.MYSQL_NAME) {
 			log.Error("连接数据库失败 %v", err)
 			return
-		} else {
-			log.Event("连接数据库成功", nil)
-			go dbc.Loop()
 		}
+
+		log.Trace("连接数据库成功", nil)
+		db.Run()
+
+		tb_mgr := rpc_db.NewTablesManager(&db)
+		google_pay_table = tb_mgr.Get_T_Google_Pay_Table()
+		apple_pay_table = tb_mgr.Get_T_Apple_Pay_Table()
 
 		if !signal_mgr.Init() {
 			log.Error("signal_mgr init failed")
 			return
-		}
-
-		if nil != dbc.Preload() {
-			log.Error("dbc Preload Failed !!")
-			return
-		} else {
-			log.Info("dbc Preload succeed !!")
 		}
 	}
 

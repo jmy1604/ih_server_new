@@ -11,7 +11,7 @@ type BanMgr struct {
 
 var ban_mgr BanMgr
 
-func (this *BanMgr) Get(unique_id string) *login_db.T_Ban_Player {
+func (this *BanMgr) GetLocal(unique_id string) *login_db.T_Ban_Player {
 	v, o := this.ban_players.Load(unique_id)
 	if !o {
 		return nil
@@ -19,7 +19,7 @@ func (this *BanMgr) Get(unique_id string) *login_db.T_Ban_Player {
 	return v.(*login_db.T_Ban_Player)
 }
 
-func (this *BanMgr) GetAndSet(unique_id string) *login_db.T_Ban_Player {
+func (this *BanMgr) Get(unique_id string) *login_db.T_Ban_Player {
 	v, o := this.ban_players.Load(unique_id)
 	if !o {
 		v, o = ban_player_table.Select("unique_id", unique_id)
@@ -31,7 +31,7 @@ func (this *BanMgr) GetAndSet(unique_id string) *login_db.T_Ban_Player {
 	return v.(*login_db.T_Ban_Player)
 }
 
-func (this *BanMgr) Set(unique_id string, ban_player *login_db.T_Ban_Player) bool {
+func (this *BanMgr) SetLocal(unique_id string, ban_player *login_db.T_Ban_Player) bool {
 	_, o := this.ban_players.LoadOrStore(unique_id, ban_player)
 	if o {
 		return false

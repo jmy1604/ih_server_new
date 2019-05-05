@@ -472,11 +472,11 @@ func H2LAccountBanHandler(conn *server_conn.ServerConn, m proto.Message) {
 	pid := req.GetPlayerId()
 	ban := req.GetBanOrFree()
 
-	ban_player := ban_mgr.GetAndSet(uid)
+	ban_player := ban_mgr.Get(uid)
 	var is_new bool
 	if ban_player == nil {
 		ban_player = ban_player_table.NewRow(uid)
-		ban_mgr.Set(uid, ban_player)
+		ban_mgr.SetLocal(uid, ban_player)
 		is_new = true
 	}
 

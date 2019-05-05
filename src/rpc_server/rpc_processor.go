@@ -81,25 +81,21 @@ func (this *H2R_GlobalProc) ChargeSave(args *rpc_proto.H2R_ChargeSave, result *r
 	}()
 
 	if args.Channel == 1 {
-		row := dbc.GooglePays.GetRow(args.OrderId)
-		if row == nil {
-			row = dbc.GooglePays.AddRow(args.OrderId)
-			row.SetBundleId(args.BundleId)
-			row.SetAccount(args.Account)
-			row.SetPlayerId(args.PlayerId)
-			row.SetPayTime(args.PayTime)
-			row.SetPayTimeStr(args.PayTimeStr)
-		}
+		row := google_pay_table.NewRow(args.OrderId)
+		row.Set_bundle_id(args.BundleId)
+		row.Set_account(args.Account)
+		row.Set_player_id(args.PlayerId)
+		row.Set_pay_time(args.PayTime)
+		row.Set_pay_time_str(args.PayTimeStr)
+		google_pay_table.InsertIgnore(row)
 	} else if args.Channel == 2 {
-		row := dbc.ApplePays.GetRow(args.OrderId)
-		if row == nil {
-			row = dbc.ApplePays.AddRow(args.OrderId)
-			row.SetBundleId(args.BundleId)
-			row.SetAccount(args.Account)
-			row.SetPlayerId(args.PlayerId)
-			row.SetPayTime(args.PayTime)
-			row.SetPayTimeStr(args.PayTimeStr)
-		}
+		row := apple_pay_table.NewRow(args.OrderId)
+		row.Set_bundle_id(args.BundleId)
+		row.Set_account(args.Account)
+		row.Set_player_id(args.PlayerId)
+		row.Set_pay_time(args.PayTime)
+		row.Set_pay_time_str(args.PayTimeStr)
+		apple_pay_table.InsertIgnore(row)
 	} else {
 		err_str := fmt.Sprintf("@@@ H2R_GlobalProc::ChargeSave Player[%v,%v], Unknown Channel %v", args.Account, args.PlayerId, args.Channel)
 		return errors.New(err_str)

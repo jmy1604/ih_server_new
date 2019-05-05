@@ -325,7 +325,7 @@ func register_handler(account, password string, is_guest bool) (err_code int32, 
 		return -1, nil
 	}
 
-	account_row := acc_mgr.GetAndSet(account)
+	account_row := acc_mgr.Get(account)
 	if account_row != nil {
 		log.Error("Account[%v] already exists", account)
 		return int32(msg_client_message.E_ERR_ACCOUNT_ALREADY_REGISTERED), nil
@@ -400,14 +400,14 @@ func bind_new_account_handler(server_id int32, account, password, new_account, n
 		return
 	}
 
-	row := acc_mgr.GetAndSet(account)
+	row := acc_mgr.Get(account)
 	if row == nil {
 		err_code = int32(msg_client_message.E_ERR_ACCOUNT_NOT_REGISTERED)
 		log.Error("Account %v not registered, cant bind new account", account)
 		return
 	}
 
-	ban_row := ban_mgr.GetAndSet(row.Get_unique_id())
+	ban_row := ban_mgr.Get(row.Get_unique_id())
 	if ban_row != nil && ban_row.Get_start_time() > 0 {
 		err_code = int32(msg_client_message.E_ERR_ACCOUNT_BE_BANNED)
 		log.Error("Account %v has been banned, cant login", account)
@@ -432,7 +432,7 @@ func bind_new_account_handler(server_id int32, account, password, new_account, n
 		return
 	}
 
-	if acc_mgr.GetAndSet(new_account) != nil {
+	if acc_mgr.Get(new_account) != nil {
 		err_code = int32(msg_client_message.E_ERR_ACCOUNT_NEW_BIND_ALREADY_EXISTS)
 		log.Error("New Account %v to bind already exists", new_account)
 		return
@@ -588,7 +588,7 @@ func _verify_facebook_login(user_id, input_token string) int32 {
 
 func login_handler(account, password, channel, client_os string, is_verify bool) (err_code int32, resp_data []byte) {
 	var is_new bool
-	acc_row := acc_mgr.GetAndSet(account)
+	acc_row := acc_mgr.Get(account)
 	if config.VerifyAccount {
 		if channel == "" {
 			if acc_row == nil {
@@ -648,7 +648,7 @@ func login_handler(account, password, channel, client_os string, is_verify bool)
 		acc_row.Set_last_get_player_list_time(int32(now_time.Unix()))
 	}
 
-	ban_row := ban_mgr.GetAndSet(acc_row.Get_unique_id())
+	ban_row := ban_mgr.Get(acc_row.Get_unique_id())
 	if ban_row != nil && ban_row.Get_start_time() > 0 {
 		err_code = int32(msg_client_message.E_ERR_ACCOUNT_BE_BANNED)
 		log.Error("Account %v has been banned, cant login", account)
@@ -756,14 +756,14 @@ func _select_server(unique_id, account string, server_id int32) (err_code int32,
 }
 
 func select_server_handler(account, token string, server_id int32) (err_code int32, resp_data []byte) {
-	row := acc_mgr.GetAndSet(account)
+	row := acc_mgr.Get(account)
 	if row == nil {
 		err_code = int32(msg_client_message.E_ERR_ACCOUNT_NOT_REGISTERED)
 		log.Error("select_server_handler: account[%v] not register", account)
 		return
 	}
 
-	ban_row := ban_mgr.GetAndSet(row.Get_unique_id())
+	ban_row := ban_mgr.Get(row.Get_unique_id())
 	if ban_row != nil && ban_row.Get_start_time() > 0 {
 		err_code = int32(msg_client_message.E_ERR_ACCOUNT_BE_BANNED)
 		log.Error("Account %v has been banned, cant login", account)
@@ -809,14 +809,14 @@ func select_server_handler(account, token string, server_id int32) (err_code int
 }
 
 func set_password_handler(account, password, new_password string) (err_code int32, resp_data []byte) {
-	row := acc_mgr.GetAndSet(account)
+	row := acc_mgr.Get(account)
 	if row == nil {
 		err_code = int32(msg_client_message.E_ERR_PLAYER_NOT_EXIST)
 		log.Error("set_password_handler account[%v] not found", account)
 		return
 	}
 
-	ban_row := ban_mgr.GetAndSet(row.Get_unique_id())
+	ban_row := ban_mgr.Get(row.Get_unique_id())
 	if ban_row != nil && ban_row.Get_start_time() > 0 {
 		err_code = int32(msg_client_message.E_ERR_ACCOUNT_BE_BANNED)
 		log.Error("Account %v has been banned, cant login", account)

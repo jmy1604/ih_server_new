@@ -11,7 +11,7 @@ type AccountMgr struct {
 
 var acc_mgr AccountMgr
 
-func (this *AccountMgr) Get(acc string) *login_db.T_Account {
+func (this *AccountMgr) GetLocal(acc string) *login_db.T_Account {
 	v, o := this.accounts.Load(acc)
 	if !o {
 		return nil
@@ -19,7 +19,7 @@ func (this *AccountMgr) Get(acc string) *login_db.T_Account {
 	return v.(*login_db.T_Account)
 }
 
-func (this *AccountMgr) GetAndSet(acc string) *login_db.T_Account {
+func (this *AccountMgr) Get(acc string) *login_db.T_Account {
 	v, o := this.accounts.Load(acc)
 	if !o {
 		v, o = account_table.Select("account", acc)
@@ -31,7 +31,7 @@ func (this *AccountMgr) GetAndSet(acc string) *login_db.T_Account {
 	return v.(*login_db.T_Account)
 }
 
-func (this *AccountMgr) Set(acc string, account_row *login_db.T_Account) bool {
+func (this *AccountMgr) SetLocal(acc string, account_row *login_db.T_Account) bool {
 	_, o := this.accounts.LoadOrStore(acc, account_row)
 	if o {
 		return false
