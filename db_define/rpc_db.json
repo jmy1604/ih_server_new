@@ -12,12 +12,12 @@
 			"primary_key": "order_id",
 			"engine": "innodb",
 			"fields": [
-				{ "name":"order_id",			"type":"char",				"length":32,		"index_type":"none",	"create_flags":"not null" },
-				{ "name":"bundle_id",			"type":"char",				"length":64,		"index_type":"none",	"create_flags":"not null,default"},
-				{ "name":"account",				"type":"char",				"length":64,		"index_type":"normal",	"create_flags":"not null,default" },
-				{ "name":"player_id",			"type":"int",				"length":0,			"index_type":"none",	"create_flags":"unsigned,not null,default" },
-				{ "name":"pay_time",			"type":"int",				"length":0,			"index_type":"none",	"create_flags":"unsigned,not null,default" },
-				{ "name":"pay_time_str",		"type":"char",				"length":64,		"index_type":"none",	"create_flags":"not null,default" }
+				{ "name":"order_id",			"type":"char",		"length":32,		"index_type":"none",	"create_flags":"not null" },
+				{ "name":"bundle_id",			"type":"char",		"length":64,		"index_type":"none",	"create_flags":"not null,default"},
+				{ "name":"account",				"type":"char",		"length":64,		"index_type":"normal",	"create_flags":"not null,default" },
+				{ "name":"player_id",			"type":"int",		"length":0,			"index_type":"none",	"create_flags":"unsigned,not null,default" },
+				{ "name":"pay_time",			"type":"int",		"length":0,			"index_type":"none",	"create_flags":"unsigned,not null,default" },
+				{ "name":"pay_time_str",		"type":"char",		"length":64,		"index_type":"none",	"create_flags":"not null,default" }
 			]
 		},
 		{
@@ -25,12 +25,12 @@
 			"primary_key": "order_id",
 			"engine": "innodb",
 			"fields": [
-				{ "name":"order_id",			"type":"char",				"length":64,		"index_type":"none",	"create_flags":"not null" },
-				{ "name":"bundle_id",			"type":"char",				"length":64,		"index_type":"none",	"create_flags":"not null,default"},
-				{ "name":"account",				"type":"char",				"length":32,		"index_type":"normal",	"create_flags":"not null,default" },
-				{ "name":"player_id",			"type":"int",				"length":0,			"index_type":"normal",	"create_flags":"unsigned,not null,default" },
-				{ "name":"pay_time",			"type":"int",				"length":0,			"index_type":"none",	"create_flags":"unsigned,not null,default" },
-				{ "name":"pay_time_str",		"type":"char",				"length":32,		"index_type":"none",	"create_flags":"not null,default" }
+				{ "name":"order_id",			"type":"char",	 	"length":64,		"index_type":"none",	"create_flags":"not null" },
+				{ "name":"bundle_id",			"type":"char",		"length":64,		"index_type":"none",	"create_flags":"not null,default"},
+				{ "name":"account",				"type":"char",		"length":32,		"index_type":"normal",	"create_flags":"not null,default" },
+				{ "name":"player_id",			"type":"int",		"length":0,			"index_type":"normal",	"create_flags":"unsigned,not null,default" },
+				{ "name":"pay_time",			"type":"int",		"length":0,			"index_type":"none",	"create_flags":"unsigned,not null,default" },
+				{ "name":"pay_time_str",		"type":"char",		"length":32,		"index_type":"none",	"create_flags":"not null,default" }
 			]
 		}
 	]
