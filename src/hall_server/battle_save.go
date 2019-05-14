@@ -223,15 +223,15 @@ func (this *BattleSaveManager) DeleteRecord(requester_id, record_id int32) int32
 			}
 		}
 	} else if delete_state == 1 {
-		this.saves.RemoveRow(record_id)
+		/*this.saves.RemoveRow(record_id)
 		if defenser != nil {
 			defenser.db.BattleSaves.Remove(record_id)
-		}
+		}*/
 	} else if delete_state == 2 {
-		this.saves.RemoveRow(record_id)
+		/*this.saves.RemoveRow(record_id)
 		if attacker != nil {
 			attacker.db.BattleSaves.Remove(record_id)
-		}
+		}*/
 	} else {
 		return int32(msg_client_message.E_ERR_PLAYER_BATTLE_RECORD_FORBIDDEN_DELETE)
 	}
