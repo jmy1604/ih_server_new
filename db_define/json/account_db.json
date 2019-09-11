@@ -1,0 +1,30 @@
+{
+	"db_pkg" : "account_db",
+	
+	"charset": "utf8",
+	
+	"field_structs": [
+	],
+	
+	"tables" : [
+		{
+			"name": "t_account",
+			"primary_key": "account",
+			"engine": "innodb",
+			"fields": [
+				{ "name":"account",				"type":"char(32) not null"				 },
+				{ "name":"unique_id",			"type":"char(64) not null default ''"	 },
+				{ "name":"password",			"type":"char(32) not null default ''"	 },
+				{ "name":"register_time",		"type":"int not null default 0"		 	 },
+				{ "name":"channel",				"type":"char(32) not null default ''"	 },
+				{ "name":"token",				"type":"char(64) not null default ''"	 },
+				{ "name":"last_server_id",		"type":"int unsigned not null default 0" },
+				{ "name":"bind_new_account",	"type":"char(32) not null default ''"	 },
+				{ "name":"before_bind_account",	"type":"char(32) not null default ''"	 }
+			],
+			"index": [
+				{ "field":"unique_id",			"type":"normal" }
+			]
+		}
+	]
+}

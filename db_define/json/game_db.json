@@ -1,0 +1,223 @@
+{
+	"db_pkg" : "game_db",
+	
+	"charset": "utf8",
+	
+	"field_structs": [
+		{
+			"name": "DBItemData",
+			"members": [
+				{ "name": "type_id", 	"index": 1,  "type": "int32" },
+				{ "name": "unique_id", 	"index": 2,  "type": "int64" },
+				{ "name": "num",		"index": 3,  "type": "int32" }
+			]
+		},
+		{
+			"name": "DBItems",
+			"members": [
+				{ "name": "items", 		"index": 1,  "type": "map<int32, DBItemData>" }
+			]
+		},
+		{
+			"name": "DBSkillData",
+			"members": [
+				{ "name": "skill_id",	"index": 1,  "type": "int32" },
+				{ "name": "level",		"index": 2,  "type": "int32" }
+			]
+		},
+		{
+			"name": "DBSkills",
+			"members": [
+				{ "name": "skills",		"index": 1,  "type": "map<int32, DBSkillData>" }
+			]
+		},
+		{
+			"name": "DBTaskData",
+			"members": [
+				{ "name": "task_id",	"index": 1,  "type": "int32" },
+				{ "name": "task_state",	"index": 2,  "type": "int32" },
+				{ "name": "task_param",	"index": 3,  "type": "int32" },
+				{ "name": "task_param2","index": 4,  "type": "int32" }
+			]
+		},
+		{
+			"name": "DBTasks",
+			"members": [
+				{ "name": "tasks",		"index": 1,  "type": "map<int32, DBTaskData>" }
+			]
+		},
+		{
+			"name": "DBActivityData",
+			"members": [
+				{ "name": "id",			"index": 1, "type": "int32" },
+				{ "name": "state",		"index": 2, "type": "int32" }
+			]
+		},
+		{
+			"name": "DBActivitys",
+			"members": [
+				{ "name": "activities",	"index": 1, "type": "map<int32, DBActivityData>" }
+			]
+		},
+		{
+			"name": "DBFriendData",
+			"members": [
+				{ "name": "player_id", 	"index": 1, "type": "int32" },
+				{ "name": "get_points",	"index": 2, "type": "int32" }
+			]
+		},
+		{
+			"name": "DBFriends",
+			"members": [
+				{ "name": "friends", 	"index": 1, "type": "map<int32, DBFriendData>" }
+			]
+		},
+		{
+			"name": "DBRoleCommon",
+			"members": [
+				{ "index": 1, "type": "int32", "name": "displace_role_id" },
+				{ "index": 2, "type": "int32", "name": "displace_new_role_table_id"},
+				{ "index": 3, "type": "int32", "name": "displace_group_id" },
+				{ "index": 4, "type": "int32", "name": "power_update_time" }
+			]
+		},
+		{
+			"name": "DBRoleData",
+			"members": [
+				{ "name": "id",			"index": 1, "type": "int32" },
+				{ "name": "table_id",	"index": 2, "type": "int32" },
+				{ "name": "rank",		"index": 3, "type": "int32" },
+				{ "name": "level",		"index": 4, "type": "int32" },
+				{ "name": "equips",		"index": 5, "type": "repeated int32" },
+				{ "name": "is_lock",	"index": 6, "type": "int32" },
+				{ "name": "state",		"index": 7, "type": "int32" }
+			]
+		},
+		{
+			"name": "DBRoles",
+			"members": [
+				{ "index": 1, "type": "map<int32, DBRoleData>", "name": "roles" }
+			]
+		}
+	],
+	
+	"tables" : [
+		{
+			"name":"t_global",
+			"single_row": true,
+			"engine":"myisam",
+			"fields":[
+				{ "name":"curr_player_id", 	"type":"int unsigned not null default 0" },
+				{ "name":"curr_guild_id", 	"type":"int unsigned not null default 0" }
+			]
+		},
+		
+		{
+			"name": "t_player",
+			"primary_key": "id",
+			"engine": "innodb",
+			"fields": [
+				{ "name":"id",				"type":"int unsigned not null" 				},
+				{ "name":"account",			"type":"varchar(16) not null default ''" 	},
+				{ "name":"role_id",			"type":"bigint unsigned not null default 0" },
+				{ "name":"nick_name",		"type":"varchar(16) not null default ''" 	},
+				{ "name":"sex",				"type":"tinyint unsigned not null default 0" },
+				{ "name":"level",			"type":"int unsigned not null default 0" 	},
+				{ "name":"vip_level",		"type":"int unsigned not null default 0" 	},
+				{ "name":"exp",				"type":"int unsigned not null default 0" 	},
+				{ "name":"head",			"type":"int unsigned not null default 0" 	},
+				{ "name":"create_time",		"type":"int unsigned not null default 0" 	},
+				{ "name":"token",			"type":"char(128) not null default ''"  	},
+				{ "name":"last_login",		"type":"int unsigned not null default 0" 	},
+				{ "name":"last_logout",		"type":"int unsigned not null default 0" 	},
+				{ "name":"items",			"type":"blob:DBItems" 						},
+				{ "name":"skills",			"type":"blob:DBSkills" 						},
+				{ "name":"tasks",			"type":"blob:DBTasks" 						},
+				{ "name":"activities",		"type":"blob:DBActivitys" 					},
+				{ "name":"role_common",		"type":"blob:DBRoleCommon" 					},
+				{ "name":"roles",			"type":"mediumblob:DBRoles" 				}
+			],
+			"index": [
+				{ "field":"account", 		"type":"unique" },
+				{ "field":"role_id", 		"type":"normal" }
+			]
+		},
+		
+		{
+			"name": "t_player_friend",
+			"primary_key": "id",
+			"engine": "innodb",
+			"fields": [
+				{ "name":"id", 				"type":"int unsigned not null" },
+				{ "name":"friends", 		"type":"blob:DBFriends" }
+			]
+		},
+		
+		{
+			"name":"t_mail",
+			"primary_key":"id",
+			"engine":"innodb",
+			"fields": [
+				{ "name":"id",				"type":"int unsigned not null" },
+				{ "name":"mail_id",			"type":"int unsigned not null default 0" },
+				{ "name":"title",			"type":"varchar(16) not null default ''" },
+				{ "name":"content",			"type":"varchar(200) not null default ''" },
+				{ "name":"sender",			"type":"bigint unsigned not null default 0" },
+				{ "name":"receiver",		"type":"bigint unsigned not null default 0" },
+				{ "name":"send_time",		"type":"int not null default 0" }
+			],
+			"index": [
+				{ "field":"mail_id", 		"type":"unique" },
+				{ "field":"sender",  		"type":"normal" },
+				{ "field":"receiver", 		"type":"normal" }
+			]
+		},
+		
+		{
+			"name":"t_guild",
+			"primary_key":"id",
+			"engine":"innodb",
+			"fields": [
+				{ "name":"id",				"type":"int unsigned not null" },
+				{ "name":"guild_id",		"type":"int not null default 0" },
+				{ "name":"name",			"type":"varchar(16) not null default ''" },
+				{ "name":"creater", 		"type":"bigint unsigned not null default 0" },
+				{ "name":"create_time",		"type":"timestamp not null default current_timestamp" },
+				{ "name":"logo",			"type":"int not null default 0" },
+				{ "name":"level",			"type":"int not null default 0" },
+				{ "name":"exp",				"type":"int not null default 0" }
+			],
+			"index": [
+				{ "field":"guild_id",		"type":"unique" }
+			]
+		},
+		
+		{
+			"name":"t_arena",
+			"primary_key":"role_id",
+			"engine":"innodb",
+			"fields":[
+				{ "name":"role_id",     	"type":"int unsigned not null" },
+				{ "name":"update_time",		"type":"int unsigned not null" },
+				{ "name":"score",			"type":"int unsigned not null" }
+			]
+		},
+		
+		{
+			"name":"t_battle_record",
+			"primary_key":"record_id",
+			"engine":"innodb",
+			"fields":[
+				{"name":"record_id",		"type":"int unsigned not null" },
+				{"name":"save_time",		"type":"int unsigned not null" },
+				{"name":"save_data",		"type":"blob not null" },
+				{"name":"attacker",			"type":"int unsigned not null" },
+				{"name":"defenser",			"type":"int unsigned not null" }
+			],
+			"index": [
+				{ "field":"attacker",		"type":"normal" },
+				{ "field":"defenser",		"type":"normal" }
+			]
+		}
+	]
+}
